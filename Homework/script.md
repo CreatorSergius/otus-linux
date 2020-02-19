@@ -16,6 +16,6 @@ for i in $(seq 1 5); do mkfs.ext4 /dev/md0p$i; done
 mkdir -p /raid/part{1,2,3,4,5}
 for i in $(seq 1 5); do mount /dev/md0p$i /raid/part$i; done
 
-mdadm /dev/md0 --fail /dev/sdf
-mdadm /dev/md0 --remove /dev/sdf
-mdadm /dev/md0 --add /dev/sdg
+#mdadm /dev/md0 --fail /dev/sdf
+#mdadm /dev/md0 --remove /dev/sdf
+#mdadm /dev/md0 --add /dev/sdg
