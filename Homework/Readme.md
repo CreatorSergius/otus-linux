@@ -20,7 +20,7 @@
 
 
 **Перенос системы на зеркало
-Этот пункт не выполнил, не до конца понимаю как работет, как прописать, что бы сервер загружался с райд1. Делал несколько разных вариатов, всегда загружается в dev/sda, система загружается когда вытаскиваю первый HDD.
+Этот пункт не выполнил, не до конца понимаю как работет, как прописать, что бы сервер загружался с райд1. Делал несколько разных вариатов, всегда загружается с dev/sda, система загружается c raid только когда вытаскиваю первый HDD.
 
 
 1. Создаю разделы с помощью утилиты fdisk, ставлю метку диску fd
@@ -31,56 +31,26 @@ mdadm --detail --scan > /etc/mdadm.conf
 4. Создаю на зеркале файловую систему 
 mkfs.xfs /dev/md1
 5. Создаю две папки в корне для монтирования устройств /old - для диска sda1, /new -для диска md1
-6. Выключаю Selinux, прописываю в файле disable, и перевожу в состояние permissive
+6. Выключаю Selinux, прописываю в файле  "/etc/selinux/config"  SELINUX=disable, и перевожу в состояние  командой  "setenforce 0"  permissive
 7. Монтирую разделы для копирования  mount /dev/sda1 /old/  mount /dev/md1 /new/
-8. Копирую корень с помощью утилиты rsync -axu /old/ /new/ 
+8. Копирую корень с помощью утилиты 
+rsync -axu /old/ /new/ 
 9. Отмонтироваю диск sda1
 10. Монитрую системный папки и перехожу в chroot 
  mount --bind /proc/ /new/proc/ && mount --bind /dev/ /new/dev/ && mount --bind /sys/ /new/sys/ && mount --bind /run/ /new/run/ && chroot /new/
 11. Заменю UUID в fstab c sda1 на md1 
-ls -l /dev/disk/by-uuid |grep md >> /etc/fstab && vi /etc/fstab
+ls -l /dev/disk/by-uuid | grep md >> /etc/fstab && vi /etc/fstab 
 12. Передаю опцию rd.auto=1 в ядро в /etc/default/grub
+13. включаю поддержку в initramfs raid массивов.
 dracut --mdadmconf --force
-
-13. конфигурирование Grub -  grub2-mkconfig -o /boot/grub2/grub.cfg
-
-14. установка загрузочной области на диск  grub2-install /dev/sdb
+14. конфигурирование Grub -  grub2-mkconfig -o /boot/grub2/grub.cfg
+15. установка загрузочной области на диск  grub2-install /dev/sdb  
 grub2-install /dev/sdc
 
 
+touch /.autorelabel
 
-15. перезагрузка. 
-Не получается загрузится 
 
-[root@arraytransfer /]# lsblk
-NAME    MAJ:MIN RM  SIZE RO TYPE  MOUNTPOINT
-sda       8:0    0   40G  0 disk
-└─sda1    8:1    0   40G  0 part  /
-sdb       8:16   0  4.9G  0 disk
-└─sdb1    8:17   0  4.9G  0 part
-  └─md1   9:1    0  4.9G  0 raid1 /new
-sdc       8:32   0  4.9G  0 disk
-└─sdc1    8:33   0  4.9G  0 part
-  └─md1   9:1    0  4.9G  0 raid1 /new
-[root@arraytransfer /]# chr
-chronyc  chronyd  chroot   chrt
-[root@arraytransfer /]# chro
-chronyc  chronyd  chroot
-[root@arraytransfer /]# chro
-chronyc  chronyd  chroot
-[root@arraytransfer /]# chroot /new/
-[root@arraytransfer /]# df -TH
-Filesystem     Type      Size  Used Avail Use% Mounted on
-/dev/md1       xfs       5.3G  3.1G  2.2G  60% /
-devtmpfs       devtmpfs  512M     0  512M   0% /dev
-tmpfs          tmpfs     520M  7.1M  513M   2% /run
-tmpfs          tmpfs     104M     0  104M   0% /run/user/0
-[root@arraytransfer /]# df -Th
-Filesystem     Type      Size  Used Avail Use% Mounted on
-/dev/md1       xfs       4.9G  2.9G  2.0G  60% /
-devtmpfs       devtmpfs  488M     0  488M   0% /dev
-tmpfs          tmpfs     496M  6.8M  489M   2% /run
-tmpfs          tmpfs     100M     0  100M   0% /run/user/0
 
 
 
